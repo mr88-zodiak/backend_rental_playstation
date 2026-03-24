@@ -1,0 +1,16 @@
+# Dependency
+node_modules/
+
+# Security
+.env
+.env.local
+
+# Logs
+*.log
+
+# System
+.DS_Store
+Thumbs.db
+
+# Documentation / Ide
+.vscode/
