@@ -10,5 +10,8 @@ router.post("/auth/register", controller.register);
 router.post("/auth/login", controller.login);
 router.get("/auth/google", passport.authenticate("google", { scope: ["email", "profile"] }));
 router.get("/auth/google/callback", passport.authenticate("google", { session: false, failureRedirect: "/auth/login" }), controller.googleCallback);
+router.post("/auth/verification/:uuid", controller.verify);
+router.post("/auth/resendCode/:uuid", controller.resendCode);
+router.get("/api/getData/:uuid", checkAuth, controller.getUserData);
 
 module.exports = router;
