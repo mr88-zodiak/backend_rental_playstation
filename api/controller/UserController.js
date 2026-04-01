@@ -1,5 +1,6 @@
 const users = require("../models/Users");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
 const service = require("../service/emailService");
 require("dotenv").config();
 
@@ -137,6 +138,130 @@ exports.verify = async (req, res) => {
     });
   } catch (e) {
     res.status(400).json({
+      status: "failed",
+      message: e.message,
+    });
+  }
+};
+exports.logout = async (req, res) => {
+  res.clearCookie("auth_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  res.status(200).json({
+    status: "success",
+    message: "Berhasil logout",
+  });
+};
+exports.getAllUsers = async (req, res) => {
+  try {
+    const usersData = await users.getAllUsers();
+    res.status(200).json({
+      status: "success",
+      data: usersData,
+    });
+  } catch (e) {
+    res.status(500).json({
+      status: "failed",
+      message: e.message,
+    });
+  }
+};
+exports.deleteUser = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    await users.deleteUser(uuid);
+    res.status(200).json({
+      status: "success",
+      message: "User berhasil dihapus",
+    });
+  } catch (e) {
+    res.status(500).json({
+      status: "failed",
+      message: e.message,
+    });
+  }
+};
+exports.updateUser = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const updateData = req.body;
+    const updatedUser = await users.updatedUserByuuid(uuid, updateData);
+    let targetHapus = ["password", "otp_code", "otp_expires_at", "otp_attempts", "last_otp_sent_at"];
+    targetHapus.forEach((key) => {
+      delete updatedUser[key];
+    });
+    res.status(200).json({
+      status: "success",
+      message: "User berhasil diperbarui",
+      data: updatedUser,
+    });
+  } catch (e) {
+    res.status(500).json({
+      status: "failed",
+      message: e.message,
+    });
+  }
+};
+exports.getUserByUuid = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const user = await users.getUserData(uuid);
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User tidak ditemukan",
+      });
+    }
+    res.status(200).json({
+      status: "success",
+      data: user,
+    });
+  } catch (e) {
+    res.status(500).json({
+      status: "failed",
+      message: e.message,
+    });
+  }
+};
+
+exports.uploadAvatar = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    if (!req.file) {
+      return res.status(400).json({
+        status: "failed",
+        message: "File avatar tidak ditemukan",
+      });
+    }
+
+    const avatarPath = req.file.path;
+    const fileBuffer = fs.readFileSync(avatarPath);
+
+    const optimizedAvatarBuffer = await users.optimizeImage(fileBuffer);
+
+    fs.writeFileSync(avatarPath, optimizedAvatarBuffer);
+
+    const updatedUser = await users.updatedUserByuuid(uuid, { avatar: avatarPath });
+    const userData = updatedUser.toJSON();
+    const targetHapus = ["password", "otp_attempts", "otp_expires_at", "otp_code", "last_otp_sent_at"];
+
+    targetHapus.forEach((key) => {
+      delete userData[key];
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Avatar berhasil diunggah dan diperkecil ukurannya",
+      data: userData,
+    });
+  } catch (e) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(500).json({
       status: "failed",
       message: e.message,
     });

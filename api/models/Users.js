@@ -2,6 +2,7 @@ const { Model } = require("objection");
 const { compare, hash } = require("bcrypt");
 const crypto = require("crypto");
 const service = require("../service/emailService");
+const sharp = require("sharp");
 
 class users extends Model {
   static get tableName() {
@@ -11,11 +12,24 @@ class users extends Model {
     return "id";
   }
   static async getUserData(uuid) {
-    // return await this.query().findById(id).select("id", "uuid", "name", "email", "role", "avatar", "is_verified");
     return await this.query().where("uuid", uuid).first().select("id", "uuid", "name", "email", "role", "avatar", "is_verified");
   }
   static async getUUID() {
     return await this.query().select("uuid");
+  }
+  static async getAllUsers() {
+    return await this.query().select("id", "uuid", "username", "name", "email", "role", "avatar", "is_verified");
+  }
+  static async updatedUserByuuid(uuid, updateData) {
+    return await this.query().patch(updateData).where("uuid", uuid).returning("*").first();
+  }
+  static async deleteUser(uuid) {
+    const deletedCount = await this.query().where("uuid", uuid).delete();
+
+    if (deletedCount === 0) {
+      throw new Error("User tidak ditemukan atau sudah dihapus");
+    }
+    return deletedCount;
   }
 
   static async Login(username, password) {
@@ -118,6 +132,9 @@ class users extends Model {
   }
   static async patchIsVerified(userUuid) {
     return await this.query().patchAndFetchById(userUuid, { is_verified: true });
+  }
+  static async optimizeImage(buffer) {
+    return await sharp(buffer).resize(800).webp({ quality: 75, effort: 4 }).toBuffer();
   }
 }
 
