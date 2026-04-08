@@ -26,4 +26,6 @@ router.get("/api/products", ProductController.getAllProducts);
 router.post("/api/products", upload.single("image"), ProductController.createProduct);
 // router.put("/api/products/:id", ProductController.updateProduct);
 // router.delete("/api/products/:id", ProductController.deleteProduct);
+router.get("/api/getData/:uuid", checkAuth, controller.getUserData);
+
 module.exports = router;
