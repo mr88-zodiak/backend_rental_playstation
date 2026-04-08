@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Menghapus semua file di folder uploads tapi menyisakan folder itu sendiri
+echo "Membersihkan folder avatar..."
+rm -rf ./uploads/avatars/*
+
+echo "Folder bersih!"

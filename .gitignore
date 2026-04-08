@@ -14,3 +14,6 @@ Thumbs.db
 
 # Documentation / Ide
 .vscode/
+./package-lock.json
+./open-db
+./open-db.bat
